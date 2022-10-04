@@ -101,6 +101,9 @@ library(bayestestR)
 
 library(betareg)
 
+# stealing ability to make flat violin plots
+source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
+
 # set wd
 #this.dir <- dirname(parent.frame(2)$ofile)
 #setwd(this.dir)
@@ -944,9 +947,12 @@ label_noncompliant <- function(datadf,
         
         catch_score <- catch_score(subjectdf)
         
-        if(catch_score > score_cutoff){ # catch score cutoff
+        if(catch_score < score_cutoff){ # catch score cutoff
             print(paste("Subject",ID,"had a catch score of: ",catch_score,sep=' ')) # Catch score faile
             datadf$noncompliant[datadf$subject == ID] = 4
+        } else {
+            print(paste("Subject",ID,"was compliant"))
+            datadf$noncompliant[datadf$subject == ID] = 0
         }
     }
     print(paste(length(unique(datadf$subject[datadf$noncompliant==0])),"of",length(unique(datadf$subject)),
@@ -1044,6 +1050,8 @@ submatrix.correlate <- function(df,submat1='CC',submat2='PP',correlation='pearso
     fpmatrix <- as.vector(df2mat.full(df, l2e('Central'), l2e('Peripheral'),sym=FALSE))
     pmatrix <- as.vector(df2mat.full(df, l2e('Peripheral'), l2e('Peripheral'),sym=FALSE))
     
+    
+    
     cc.pp <- cor(fmatrix,pmatrix,method=correlation)
     cc.cp <- cor(fmatrix,fpmatrix,method=correlation)
     cp.pp <- cor(fpmatrix,pmatrix,method=correlation)
@@ -1065,7 +1073,6 @@ correlation_obtainer <- function(datadf,correlation="pearson"){
                          magnification=double()) # initialise an output df for the traces
     for (ID in subjectlist){
         tempdf <- subset(datadf, subject == ID)
-        
         magnification_list <- sort(unique(datadf$peripheral_scale))
         size_list <- sort(unique(datadf$stimulus_size))
         for (stimulus in size_list){
@@ -1154,15 +1161,15 @@ mean(subset(correlations, label.mag != 'FIX')$CC_PP)
 plot.correlations(correlations)
 #plot.correlations.reviewer_request(correlations)
 
-h.one.a <- ttestBF(x = FisherZ(correlations$CC_CP),
+h.one.a <- ttestBF(x = FisherZ(na.omit(correlations$CC_CP)),
         mu = FisherZ(0)
        )
 
-h.one.b <- ttestBF(x = FisherZ(correlations$CC_PP),
+h.one.b <- ttestBF(x = FisherZ(na.omit(correlations$CC_PP)),
         mu = FisherZ(0)
        )
 
-h.one.c <- ttestBF(x = FisherZ(correlations$CP_PP),
+h.one.c <- ttestBF(x = FisherZ(na.omit(correlations$CP_PP)),
         mu = FisherZ(0)
        )
 
@@ -1385,14 +1392,14 @@ trace.df.mag <- subset(trace.df, Magnification != 1)
 #head(trace.df)
 
 # grab some other peripherally magnified data for illustrative purposes
-#identical <- trace_obtainer(subset(cleandf, peripheral_scale != 1), type='trace')
-#non.identical <- trace_obtainer(subset(cleandf, peripheral_scale != 1), type='non-trace')
+identical <- trace_obtainer(subset(cleandf, peripheral_scale != 1), type='trace')
+non.identical <- trace_obtainer(subset(cleandf, peripheral_scale != 1), type='non-trace')
 
-#fig5b.trace(identical)
-#fig5b.non.trace(non.identical)
+fig5b.trace(identical)
+fig5b.non.trace(non.identical)
 
 # plot the full data data
-#fig5b(trace.df)
+fig5b(trace.df)
 
 #fig5c(trace.df.mag)
 
@@ -1400,7 +1407,7 @@ trace.df.mag <- subset(trace.df, Magnification != 1)
 
 #fig5d(trace.df.mag)
 
-#fig5d.rainbow(trace.df.mag)
+fig5d.rainbow(trace.df.mag)
 
 #fig5e(trace.df)
 
@@ -1409,13 +1416,13 @@ trace.df.mag <- subset(trace.df, Magnification != 1)
 #fig5f(trace.df)
 
 #fig5f.CP.rainbow(trace.df)
-#fig5f.PP.rainbow(trace.df)
+fig5f.PP.rainbow(trace.df)
 
 # Determine thresholds
 
 # Mean dissimplarity value across the population, excluding identical-stimuli comparisons
-#threshold_df <- subset(cleandf, (Circle_1 == l2e('Central') & (Circle_2 == l2e('Central') ) & (Color_1 != Color_2)) )
-#mean(threshold_df$similarity)
+threshold_df <- subset(cleandf, (Circle_1 == l2e('Central') & (Circle_2 == l2e('Central') ) & (Color_1 != Color_2)) )
+mean(threshold_df$similarity)
 
 
 
@@ -2085,21 +2092,21 @@ sup.fig5.raincloud <- function(vals){
 #sup.fig5.raincloud(vals)
 
 mag.df <- subset(cleandf, peripheral_scale != 1)
-#fig6bc(mag.df,name='fig6c.png',tri=TRUE)
+fig6bc(mag.df,name='fig6c.png',tri=TRUE)
 
-#fig6d(var.data,rand.var.mu)
+fig6d(var.data,rand.var.mu)
 
 #fig6e(var.data.mag,rand.var.mu,vals)
-#fig6e.rainbow(var.data.mag,rand.var.mu,vals)
+fig6e.rainbow(var.data.mag,rand.var.mu,vals)
 
 #fig6f(var.data.mag,rand.var.mu,vals)
-#fig6f.rainbow(var.data.mag,vals)
+fig6f.rainbow(var.data.mag,vals)
 
 #fig6g(var.data,rand.var.mu,vals)
-#fig6g.rainbow(var.data,rand.var.mu,vals)
+fig6g.rainbow(var.data,rand.var.mu,vals)
 
 #fig6h(var.data,rand.var.mu,vals)
-#fig6h.rainbow(var.data,rand.var.mu,vals)
+fig6h.rainbow(var.data,rand.var.mu,vals)
 
 h2a <- function(data,vals,summary=FALSE){
     data$mean.var <- offset.beta(data$mean.var,
